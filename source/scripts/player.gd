@@ -18,25 +18,25 @@ extends CharacterBody2D
 @export var wall_stun_time: float = 0.25       # เวลาที่คุมทิศทางไม่ได้หลังโดนเด้ง (กันกดสู้แรงเด้งจนไม่รู้สึกว่าชน)
 
 # ===== State Machine =====
-enum State { IDLE, CHARGING, JUMPING, FALLING, LANDING }
+enum State { IDLE, CHARGING, JUMPING, FALLING, LANDING, WALL_BOUNCE }
 var state: State = State.IDLE
 
 var charge_time: float = 0.0
 var facing: int = 1              # 1 = ขวา, -1 = ซ้าย
 var jump_velocity: Vector2 = Vector2.ZERO
 var landing_timer: float = 0.0
-var wall_stun_timer: float = 0.0   # >0 = เพิ่งโดนเด้งกำแพง คุมทิศทางเองไม่ได้ชั่วขณะ
+var wall_stun_timer: float = 0.0   # นับถอยหลังตอนอยู่ใน State.WALL_BOUNCE (คุมทิศทางเองไม่ได้เลยจนกว่าจะหมด)
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 
+# ===== ปรับขนาดแยกตามอนิเมชัน =====
+# ใส่ชื่ออนิเมชันที่อยากปรับขนาดต่างจากปกติ ตัวที่ไม่ได้ระบุไว้จะใช้ Vector2(1,1) (ขนาดปกติ)
+# ตัวอย่าง: ตอน charge อยากให้ตัวละครดู "หมอบย่อ" กว้างขึ้นเตี้ยลงนิดหน่อย
 
 func _physics_process(delta: float) -> void:
 	# แรงโน้มถ่วง ใส่ตลอด ยกเว้นตอนติดพื้นจริง ๆ
 	if not is_on_floor():
 		velocity.y += gravity * delta
-
-	if wall_stun_timer > 0.0:
-		wall_stun_timer = max(wall_stun_timer - delta, 0.0)
 
 	match state:
 		State.IDLE:
@@ -45,13 +45,16 @@ func _physics_process(delta: float) -> void:
 			_process_charging(delta)
 		State.JUMPING, State.FALLING:
 			_process_airborne(delta)
+		State.WALL_BOUNCE:
+			_process_wall_bounce(delta)
 		State.LANDING:
 			_process_landing(delta)
 
 	move_and_slide()
 
 	# เช็คชนกำแพงหลัง move_and_slide เท่านั้น ถึงจะรู้ผลชนที่ถูกต้องของเฟรมนี้
-	if (state == State.JUMPING or state == State.FALLING) and wall_stun_timer <= 0.0 and is_on_wall():
+	# เช็คเฉพาะตอนกำลังขึ้น/ตกอยู่ ไม่เช็คซ้ำระหว่างที่กำลังเด้งอยู่แล้ว (กันเด้งซ้อนเด้ง)
+	if (state == State.JUMPING or state == State.FALLING) and is_on_wall():
 		_bounce_off_wall()
 
 	_update_animation()
@@ -102,13 +105,11 @@ func _perform_jump() -> void:
 
 # ---------- ลอยกลางอากาศ (ขึ้น/ตก) ----------
 func _process_airborne(delta: float) -> void:
-	# ระหว่างโดนเด้งกำแพง (wall_stun_timer > 0) ผู้เล่นคุมทิศทางเองไม่ได้ชั่วขณะ
-	# ให้รู้สึกถึงแรงกระแทกจริง ๆ ไม่ใช่กดสวนแล้วหักลบแรงเด้งจนไม่รู้สึกอะไร
-	if wall_stun_timer <= 0.0:
-		var input_dir: float = Input.get_axis("move_left", "move_right")
-		if input_dir != 0.0:
-			velocity.x += input_dir * move_speed_air * delta
-			facing = sign(input_dir)
+	# Jump King ปรับทิศตอนลอยได้นิดเดียว ไม่ใช่เดินเต็มสปีด
+	var input_dir: float = Input.get_axis("move_left", "move_right")
+	if input_dir != 0.0:
+		velocity.x += input_dir * move_speed_air * delta
+		facing = sign(input_dir)
 
 	if velocity.y >= 0.0:
 		state = State.FALLING
@@ -128,9 +129,24 @@ func _bounce_off_wall() -> void:
 	# ดึงแรงตกมาบวกเป็นแรงเด้งขึ้นนิดหน่อย ให้ดูมีน้ำหนัก ไม่ใช่แค่ลอยด้านข้าง
 	velocity.y -= wall_bounce_force * wall_bounce_vertical_boost * 0.5
 
-	facing = int(bounce_dir)
+	facing = int(bounce_dir)       # หันหน้าตามทิศที่เด้งออกมา
 	wall_stun_timer = wall_stun_time
-	state = State.FALLING
+	state = State.WALL_BOUNCE
+
+
+# ---------- WALL_BOUNCE (ล็อกทิศทางเต็มที่ ผู้เล่นคุมไม่ได้จนกว่าจะหมดเวลา) ----------
+func _process_wall_bounce(delta: float) -> void:
+	# ล็อก velocity.x ไว้ตลอดช่วงนี้ ไม่รับ input ใด ๆ ทั้งซ้ายขวา
+	# (ปล่อยให้ gravity ดึง velocity.y ต่อไปตามปกติ เพื่อให้พาราโบลาการเด้งดูเป็นธรรมชาติ)
+	wall_stun_timer -= delta
+
+	if wall_stun_timer <= 0.0:
+		# หมดเวลาล็อกแล้ว กลับไปเป็นสถานะลอยตามปกติ ตามทิศ velocity.y ตอนนั้น
+		state = State.JUMPING if velocity.y < 0.0 else State.FALLING
+		return
+
+	if is_on_floor():
+		_land()
 
 
 func _land() -> void:
@@ -154,27 +170,33 @@ func _update_animation() -> void:
 	match state:
 		State.IDLE:
 			if is_on_floor() and abs(velocity.x) > 5.0:
-				sprite.play("run")
+				_play_animation("run")
 			else:
-				sprite.play("idle")
+				_play_animation("idle")
 		State.CHARGING:
 			# ใช้ animation_speed_scale ผูกกับ charge_time เพื่อให้เห็นการ "ย่อตัว" มากขึ้นเรื่อย ๆ
 			var t: float = charge_time / max_charge_time
-			sprite.play("charge")
+			_play_animation("charge")
 			sprite.speed_scale = 1.0
 			sprite.frame = int(t * (sprite.sprite_frames.get_frame_count("charge") - 1))
 			sprite.stop() # หยุดที่เฟรมนั้น ไม่ให้เล่นวนเอง จนกว่าจะปล่อยปุ่ม
 		State.JUMPING:
-			sprite.play("jump")
+			_play_animation("jump")
 		State.FALLING:
-			if wall_stun_timer > 0.0 and sprite.sprite_frames.has_animation("wall_bounce"):
-				sprite.play("wall_bounce")
+			_play_animation("fall")
+		State.WALL_BOUNCE:
+			# ถ้ายังไม่มีอนิเมชันเฉพาะ ให้ fallback ไปเล่น "fall" แทนอัตโนมัติ
+			if sprite.sprite_frames.has_animation("wall_bounce"):
+				_play_animation("wall_bounce")
 			else:
-				sprite.play("fall")
+				_play_animation("fall")
 		State.LANDING:
-			sprite.play("land")
+			_play_animation("land")
 
 
+# ---------- เล่นอนิเมชัน + ปรับขนาดตามที่กำหนดไว้ใน animation_scales ----------
+func _play_animation(anim_name: String) -> void:
+	sprite.play(anim_name)
 # ---------- Input Map ที่ต้องตั้งใน Project Settings > Input Map ----------
 # move_left  -> A / Left Arrow
 # move_right -> D / Right Arrow
@@ -186,3 +208,13 @@ func _update_animation() -> void:
 # ระบบเด้งกำแพง: ไม่บังคับต้องมีอนิเมชันเพิ่ม จะใช้ "fall" เดิมเล่นระหว่างโดนเด้งก็ได้
 # แต่ถ้าอยากให้มีท่าเฉพาะตอนกระแทกกำแพง ให้เพิ่มอนิเมชันชื่อ "wall_bounce" เข้าไป
 # โค้ดจะเช็คอัตโนมัติว่ามีอนิเมชันนี้ไหม ถ้าไม่มีจะ fallback ไปเล่น "fall" แทนเอง
+#
+# ตอนโดนเด้ง ตัวละครจะเข้า State.WALL_BOUNCE ซึ่งล็อกทิศทางเต็มที่ (ไม่รับ input ซ้าย/ขวาเลย)
+# จนกว่า wall_stun_time จะหมด ถึงจะคืนคอนโทรลกลับไปให้ผู้เล่น — ปรับความยาวของการล็อกได้ที่ wall_stun_time
+#
+# ---------- ปรับขนาดแยกแต่ละอนิเมชัน ----------
+# แก้ได้ตรง ๆ ที่ตัวแปร animation_scales ด้านบน (หรือปรับใน Inspector ก็ได้ เพราะเป็น @export)
+# key = ชื่ออนิเมชัน, value = Vector2(scale_x, scale_y)
+# ตัวไหนไม่ได้ใส่ไว้ในลิสต์ จะใช้ Vector2(1,1) (ขนาดปกติ) โดยอัตโนมัติ
+# เวลาเปลี่ยนอนิเมชัน ฟังก์ชัน _play_animation() จะปรับ sprite.scale ให้เองทุกครั้ง
+# ไม่กระทบกับอนิเมชันอื่น เพราะแยก key ต่อชื่ออนิเมชันชัดเจน ไม่ใช่ปรับที่ node ตรง ๆ แบบเดิม
