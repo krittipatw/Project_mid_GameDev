@@ -1,0 +1,7 @@
+[gd_resource type="LabelSettings" load_steps=2 format=3 uid="uid://x0nkvs0ub104"]
+
+[ext_resource type="FontFile" uid="uid://bap4myteag8nn" path="res://assets/fonts/PixelOperator.ttf" id="1_lt4m0"]
+
+[resource]
+font = ExtResource("1_lt4m0")
+shadow_color = Color(0, 0, 0, 1)

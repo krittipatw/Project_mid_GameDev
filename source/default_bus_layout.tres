@@ -1,0 +1,25 @@
+[gd_resource type="AudioBusLayout" format=3 uid="uid://cnnyv8w1eq6cy"]
+
+[sub_resource type="AudioEffectPhaser" id="AudioEffectPhaser_36tec"]
+resource_name = "Phaser"
+
+[sub_resource type="AudioEffectPanner" id="AudioEffectPanner_ewede"]
+resource_name = "Panner"
+
+[resource]
+bus/1/name = &"BACKGROUND"
+bus/1/solo = false
+bus/1/mute = false
+bus/1/bypass_fx = false
+bus/1/volume_db = -10.5236
+bus/1/send = &"Master"
+bus/1/effect/0/effect = SubResource("AudioEffectPhaser_36tec")
+bus/1/effect/0/enabled = false
+bus/2/name = &"sfx"
+bus/2/solo = false
+bus/2/mute = false
+bus/2/bypass_fx = false
+bus/2/volume_db = 1.65599
+bus/2/send = &"Master"
+bus/2/effect/0/effect = SubResource("AudioEffectPanner_ewede")
+bus/2/effect/0/enabled = true

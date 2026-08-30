@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://d45u0g5qi2ve"]
+
+[ext_resource type="AudioStream" uid="uid://dcmgejjpuo2t6" path="res://assets/sounds/happy-14585.mp3" id="1_8r65k"]
+
+[node name="bgscore" type="AudioStreamPlayer"]
+stream = ExtResource("1_8r65k")
+autoplay = true
+bus = &"BACKGROUND"
