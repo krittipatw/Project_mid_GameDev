@@ -16,9 +16,13 @@ extends CharacterBody2D
 @export var wall_bounce_force: float = 210.0   # แรงที่เด้งกลับตอนชนกำแพงกลางอากาศ
 @export var wall_bounce_vertical_boost: float = 0.6  # สัดส่วนที่ดึงแรงตกลงมาแปลงเป็นแรงเด้งขึ้นนิดหน่อย (0 = ไม่บวกเลย)
 @export var wall_stun_time: float = 0.25       # เวลาที่คุมทิศทางไม่ได้หลังโดนเด้ง (กันกดสู้แรงเด้งจนไม่รู้สึกว่าชน)
+@export var max_health: int = 3                # เลือดสูงสุด หมดแล้วตาย
+@export var fall_damage_velocity: float = 700.0   # ความเร็วตกขั้นต่ำที่เริ่มโดน fall damage (ต่ำกว่านี้ตกฟรี ไม่เจ็บ)
+@export var fall_death_velocity: float = 1200.0   # ความเร็วตกที่แรงพอจะตายทันที ไม่ว่าเลือดเหลือเท่าไหร่
+@export var death_input_lock_time: float = 0.4    # เวลาขั้นต่ำหลังตายก่อนจะรับ input รีสปอว์น (กันกดมั่วตอนกำลังล้มแล้วรีทันที)
 
 # ===== State Machine =====
-enum State { IDLE, CHARGING, JUMPING, FALLING, LANDING, WALL_BOUNCE }
+enum State { IDLE, CHARGING, JUMPING, FALLING, LANDING, WALL_BOUNCE, DEAD }
 var state: State = State.IDLE
 
 var charge_time: float = 0.0
@@ -26,17 +30,28 @@ var facing: int = 1              # 1 = ขวา, -1 = ซ้าย
 var jump_velocity: Vector2 = Vector2.ZERO
 var landing_timer: float = 0.0
 var wall_stun_timer: float = 0.0   # นับถอยหลังตอนอยู่ใน State.WALL_BOUNCE (คุมทิศทางเองไม่ได้เลยจนกว่าจะหมด)
+var fall_velocity_peak: float = 0.0   # เก็บความเร็วตกสูงสุดก่อนจะแตะพื้น ใช้คำนวณ fall damage
+var current_health: int
+var death_timer: float = 0.0          # นับเวลาตั้งแต่ตาย ใช้กันกดรีสปอว์นเร็วเกินไป
+var respawn_position: Vector2          # จุดที่จะเกิดใหม่ (default = ตำแหน่งเริ่มเกมของตัวละคร)
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 
-# ===== ปรับขนาดแยกตามอนิเมชัน =====
-# ใส่ชื่ออนิเมชันที่อยากปรับขนาดต่างจากปกติ ตัวที่ไม่ได้ระบุไว้จะใช้ Vector2(1,1) (ขนาดปกติ)
-# ตัวอย่าง: ตอน charge อยากให้ตัวละครดู "หมอบย่อ" กว้างขึ้นเตี้ยลงนิดหน่อย
+
+func _ready() -> void:
+	current_health = max_health
+	respawn_position = global_position   # จำตำแหน่งเริ่มต้นไว้เป็นจุดรีสปอว์น
+	# ถ้าอยากกำหนดจุดรีสปอว์นเอง (เช่น checkpoint) ให้เซ็ต respawn_position ใหม่จากที่อื่นได้ตลอดเวลา
+
 
 func _physics_process(delta: float) -> void:
 	# แรงโน้มถ่วง ใส่ตลอด ยกเว้นตอนติดพื้นจริง ๆ
 	if not is_on_floor():
 		velocity.y += gravity * delta
+
+	# เก็บความเร็วตกสูงสุดไว้ตลอด ใช้ตัดสินตอนแตะพื้นว่าจะโดน fall damage ไหม
+	if velocity.y > fall_velocity_peak:
+		fall_velocity_peak = velocity.y
 
 	match state:
 		State.IDLE:
@@ -49,6 +64,8 @@ func _physics_process(delta: float) -> void:
 			_process_wall_bounce(delta)
 		State.LANDING:
 			_process_landing(delta)
+		State.DEAD:
+			_process_dead(delta)
 
 	move_and_slide()
 
@@ -100,6 +117,7 @@ func _perform_jump() -> void:
 	velocity.x = facing * jump_force * 0.5
 	velocity.y = -jump_force
 
+	fall_velocity_peak = 0.0   # เริ่มกระโดดใหม่ ล้างสถิติการตกรอบก่อนหน้าทิ้ง
 	state = State.JUMPING
 
 
@@ -150,9 +168,77 @@ func _process_wall_bounce(delta: float) -> void:
 
 
 func _land() -> void:
+	var impact_speed: float = fall_velocity_peak
+	fall_velocity_peak = 0.0   # เคลียร์สถิติทันทีที่แตะพื้น ไม่ว่าจะเจ็บหรือไม่ก็ตาม
+
+	if impact_speed >= fall_death_velocity:
+		# ตกแรงเกินขีดสุด ตายทันทีไม่ว่าเลือดจะเหลือเท่าไหร่
+		_die()
+		return
+
+	if impact_speed >= fall_damage_velocity:
+		current_health -= 1
+		if current_health <= 0:
+			_die()
+			return
+		# TODO: จุดนี้เหมาะกับการเรียก hit-flash / SFX เจ็บ / อัปเดต UI เลือด
+
 	state = State.LANDING
 	landing_timer = landing_lock_time
 	velocity.x = 0.0
+
+
+# ---------- ตาย: หยุดนิ่งกับที่ รอผู้เล่นกดปุ่มอะไรก็ได้เพื่อรีสปอว์น ----------
+func die() -> void:
+	# ฟังก์ชันสาธารณะ ให้ node ภายนอก (เช่น killzone, หนาม, กับดัก) เรียกใช้ได้โดยตรง
+	# เช่น: player.die() จากสคริปต์กับดัก แทนการ reload scene ทั้งหมด
+	_die()
+
+
+func _die() -> void:
+	state = State.DEAD
+	death_timer = 0.0
+	velocity = Vector2.ZERO
+	# TODO: จุดนี้เหมาะกับการเรียก SFX ตาย / หยุดเวลา / เอฟเฟกต์กล้อง ฯลฯ
+
+
+# ---------- นอนรอตาย: ไม่ขยับ ไม่รับ input เดิน/กระโดดใด ๆ ทั้งสิ้น ----------
+func _process_dead(_delta: float) -> void:
+	velocity.x = 0.0
+	death_timer += _delta
+	# การรีสปอว์นจริง ๆ เกิดขึ้นใน _input() ด้านล่าง ไม่ใช่ตรงนี้
+	# เพราะอยากตรวจจับ "การกดปุ่มครั้งแรก" ไม่ใช่เช็คทุกเฟรมด้วย is_action_pressed (จะรีซ้ำถ้ากดค้าง)
+
+
+# ---------- รีสปอว์นกลับไปจุดเริ่มต้น ----------
+func _respawn() -> void:
+	global_position = respawn_position
+	velocity = Vector2.ZERO
+	current_health = max_health
+	fall_velocity_peak = 0.0
+	wall_stun_timer = 0.0
+	landing_timer = 0.0
+	charge_time = 0.0
+	state = State.IDLE
+
+
+# ---------- ดักการกดปุ่ม "อะไรก็ได้" ตอนตายอยู่ เพื่อรีสปอว์น ----------
+func _input(event: InputEvent) -> void:
+	if state != State.DEAD:
+		return
+
+	# กันกดมั่วตอนเพิ่งตายใหม่ ๆ (เช่นค้างปุ่มตอนตกตายพอดี)
+	if death_timer < death_input_lock_time:
+		return
+
+	var is_any_button_press: bool = (
+		(event is InputEventKey and event.pressed and not event.echo)
+		or (event is InputEventMouseButton and event.pressed)
+		or (event is InputEventJoypadButton and event.pressed)
+	)
+
+	if is_any_button_press:
+		_respawn()
 
 
 # ---------- LANDING (ล็อกการขยับสั้น ๆ ให้ตรงกับอนิเมชัน) ----------
@@ -192,18 +278,29 @@ func _update_animation() -> void:
 				_play_animation("fall")
 		State.LANDING:
 			_play_animation("land")
+		State.DEAD:
+			# เล่นครั้งเดียวตอนเพิ่งเข้าสถานะ DEAD เท่านั้น ไม่เรียกซ้ำทุกเฟรม
+			# เพราะถ้าอนิเมชัน "death" ตั้ง loop ไว้ปิด (ควรปิด) การเรียก play() ซ้ำจะทำให้เด้งกลับไปเฟรม 0 ทุกครั้ง
+			# ผลคือมันจะไม่มีวัน "ค้าง" อยู่เฟรมสุดท้ายแบบที่ต้องการ (นอนแน่นิ่งอยู่ตรงนั้น)
+			if sprite.animation != "death":
+				_play_animation("death")
 
 
 # ---------- เล่นอนิเมชัน + ปรับขนาดตามที่กำหนดไว้ใน animation_scales ----------
 func _play_animation(anim_name: String) -> void:
 	sprite.play(anim_name)
+	# ถ้าไม่ได้ระบุไว้ใน dictionary จะใช้ Vector2(1,1) เป็นค่าเริ่มต้น (ขนาดปกติ)
+
+
+
 # ---------- Input Map ที่ต้องตั้งใน Project Settings > Input Map ----------
 # move_left  -> A / Left Arrow
 # move_right -> D / Right Arrow
 # jump       -> Space / Z (ปุ่มเดียว กดค้างชาร์จ ปล่อยเพื่อกระโดด)
 #
 # หมายเหตุ: ต้องมีอนิเมชันชื่อ "walk" ใน SpriteFrames ด้วย ไม่งั้นตอนเดินจะ error
-# (idle, walk, charge, jump, fall, land — รวม 6 อนิเมชัน ขาดตัวใดตัวหนึ่งจะ error ตอน play())
+# (idle, walk, charge, jump, fall, land, death — อย่างน้อย 7 อนิเมชัน ขาดตัวใดตัวหนึ่งจะ error ตอน play())
+# ("wall_bounce" ไม่บังคับ มี fallback ไปเล่น "fall" แทนถ้าไม่มี — ดูหมายเหตุด้านล่าง)
 #
 # ระบบเด้งกำแพง: ไม่บังคับต้องมีอนิเมชันเพิ่ม จะใช้ "fall" เดิมเล่นระหว่างโดนเด้งก็ได้
 # แต่ถ้าอยากให้มีท่าเฉพาะตอนกระแทกกำแพง ให้เพิ่มอนิเมชันชื่อ "wall_bounce" เข้าไป
@@ -218,3 +315,23 @@ func _play_animation(anim_name: String) -> void:
 # ตัวไหนไม่ได้ใส่ไว้ในลิสต์ จะใช้ Vector2(1,1) (ขนาดปกติ) โดยอัตโนมัติ
 # เวลาเปลี่ยนอนิเมชัน ฟังก์ชัน _play_animation() จะปรับ sprite.scale ให้เองทุกครั้ง
 # ไม่กระทบกับอนิเมชันอื่น เพราะแยก key ต่อชื่ออนิเมชันชัดเจน ไม่ใช่ปรับที่ node ตรง ๆ แบบเดิม
+#
+# ---------- ระบบ Fall Damage / ตาย / รีสปอว์น ----------
+# ต้องมีอนิเมชันชื่อ "death" ใน SpriteFrames เพิ่มเข้ามาด้วย (รวมเป็น 8 อนิเมชันทั้งหมด)
+# **สำคัญมาก**: อนิเมชัน "death" ต้องปิด Loop ไว้ (ในแท็บ Animation ของ SpriteFrames กดปุ่ม Loop ให้เป็นสีเทา/ปิด)
+# ถ้าเปิด Loop ไว้ ตัวละครจะเล่นอนิเมชันตายวนซ้ำไปเรื่อย ๆ แทนที่จะค้างนิ่งอยู่เฟรมสุดท้าย
+#
+# วิธีทำงาน:
+# 1. ทุกเฟรมที่กำลังตกอยู่ (velocity.y > 0) ระบบจะจำ "ความเร็วตกสูงสุด" ไว้ใน fall_velocity_peak
+# 2. พอแตะพื้น (_land) จะเทียบความเร็วนั้นกับ fall_damage_velocity / fall_death_velocity
+#    - ต่ำกว่า fall_damage_velocity      -> ตกฟรี ไม่เจ็บ
+#    - อยู่ระหว่างสอง threshold           -> โดนดาเมจ 1 หน่วย (ปรับจำนวนเลือดที่หายได้ในโค้ด _land())
+#    - สูงกว่า fall_death_velocity        -> ตายทันที ไม่สนใจเลือดที่เหลือ
+# 3. ตายแล้วเข้า State.DEAD ตัวละครจะนิ่งสนิท ไม่รับ input เดิน/กระโดดใด ๆ ทั้งสิ้น
+# 4. ต้องรอ death_input_lock_time วินาทีก่อน ถึงจะเริ่มรับปุ่มกดเพื่อรีสปอว์น (กันกดมั่วตอนเพิ่งตาย)
+# 5. หลังจากนั้น กดปุ่มอะไรก็ได้ (คีย์บอร์ด/เมาส์/จอย) หนึ่งครั้ง -> เรียก _respawn() ทันที
+#    ถ้าไม่กดอะไรเลย ตัวละครจะนอนค้างอยู่ตรงนั้น "ตลอดไป" ตามที่ต้องการ
+# 6. _respawn() จะเทเลพอร์ตกลับไปที่ respawn_position (ค่าเริ่มต้น = ตำแหน่งตอนเกมเริ่ม เก็บไว้ใน _ready())
+#    ถ้าอยากทำระบบ checkpoint ให้ไปเซ็ต player.respawn_position = จุดนั้น ๆ จากสคริปต์ checkpoint ได้เลย
+#
+# ปรับความยากได้ที่ max_health, fall_damage_velocity, fall_death_velocity ตามความรู้สึกที่ต้องการ
