@@ -9,16 +9,19 @@ extends CharacterBody2D
 @export var move_speed_ground: float = 180.0   # ความเร็วเดินตอนอยู่บนพื้น
 @export var move_speed_air: float = 60.0       # ความเร็วขยับตอนลอยกลางอากาศ (Jump King ขยับอากาศได้น้อยมาก)
 @export var min_jump_force: float = 300.0
-@export var max_jump_force: float = 900.0
-@export var charge_rate: float = 900.0         # แรงที่เพิ่มขึ้นต่อวินาทีตอนกดค้าง
+@export var max_jump_force: float = 750.0
+@export var charge_rate: float = 750.0         # แรงที่เพิ่มขึ้นต่อวินาทีตอนกดค้าง
 @export var max_charge_time: float = 1.2
 @export var landing_lock_time: float = 0.25    # เวลาที่ขยับไม่ได้ตอนลงพื้น (ให้ตรงกับอนิเมชัน land)
 @export var wall_bounce_force: float = 210.0   # แรงที่เด้งกลับตอนชนกำแพงกลางอากาศ
 @export var wall_bounce_vertical_boost: float = 0.6  # สัดส่วนที่ดึงแรงตกลงมาแปลงเป็นแรงเด้งขึ้นนิดหน่อย (0 = ไม่บวกเลย)
 @export var wall_stun_time: float = 0.25       # เวลาที่คุมทิศทางไม่ได้หลังโดนเด้ง (กันกดสู้แรงเด้งจนไม่รู้สึกว่าชน)
-@export var max_health: int = 3                # เลือดสูงสุด หมดแล้วตาย
-@export var fall_damage_velocity: float = 700.0   # ความเร็วตกขั้นต่ำที่เริ่มโดน fall damage (ต่ำกว่านี้ตกฟรี ไม่เจ็บ)
-@export var fall_death_velocity: float = 1200.0   # ความเร็วตกที่แรงพอจะตายทันที ไม่ว่าเลือดเหลือเท่าไหร่
+@export var max_health: int = 1                # เลือดสูงสุด หมดแล้วตาย
+
+# ===== Fall Damage: อิงความสูงที่ตกจริง (px) แทนความเร็วตอนกระแทกพื้น =====
+@export var fall_damage_height: float = 250.0     # ตกเกินความสูงนี้ (px) เริ่มโดนดาเมจ ต่ำกว่านี้ตกฟรีไม่เจ็บ
+@export var fall_death_height: float = 550.0      # ตกเกินความสูงนี้ ตายทันที ไม่ว่าเลือดเหลือเท่าไหร่
+
 @export var death_input_lock_time: float = 0.4    # เวลาขั้นต่ำหลังตายก่อนจะรับ input รีสปอว์น (กันกดมั่วตอนกำลังล้มแล้วรีทันที)
 
 # ===== State Machine =====
@@ -30,7 +33,12 @@ var facing: int = 1              # 1 = ขวา, -1 = ซ้าย
 var jump_velocity: Vector2 = Vector2.ZERO
 var landing_timer: float = 0.0
 var wall_stun_timer: float = 0.0   # นับถอยหลังตอนอยู่ใน State.WALL_BOUNCE (คุมทิศทางเองไม่ได้เลยจนกว่าจะหมด)
-var fall_velocity_peak: float = 0.0   # เก็บความเร็วตกสูงสุดก่อนจะแตะพื้น ใช้คำนวณ fall damage
+
+# --- ตัวแปรใหม่สำหรับวัด fall damage จากความสูง ---
+var was_grounded: bool = true      # เก็บสถานะ is_on_floor() ของเฟรมก่อนหน้า ใช้จับจังหวะ "เพิ่งหลุดจากพื้น"
+var fall_start_y: float = 0.0      # ค่า Y ของจุดสูงสุด (ค่า Y น้อยที่สุด) ที่เคยขึ้นไปถึงระหว่างลอยอยู่รอบปัจจุบัน
+									# หมายเหตุ: แกน Y ของ Godot ชี้ลง ดังนั้น "อยู่สูง" = ค่า Y น้อย
+
 var current_health: int
 var death_timer: float = 0.0          # นับเวลาตั้งแต่ตาย ใช้กันกดรีสปอว์นเร็วเกินไป
 var respawn_position: Vector2          # จุดที่จะเกิดใหม่ (default = ตำแหน่งเริ่มเกมของตัวละคร)
@@ -41,6 +49,7 @@ var respawn_position: Vector2          # จุดที่จะเกิดใ
 func _ready() -> void:
 	current_health = max_health
 	respawn_position = global_position   # จำตำแหน่งเริ่มต้นไว้เป็นจุดรีสปอว์น
+	fall_start_y = global_position.y
 	# ถ้าอยากกำหนดจุดรีสปอว์นเอง (เช่น checkpoint) ให้เซ็ต respawn_position ใหม่จากที่อื่นได้ตลอดเวลา
 
 
@@ -49,9 +58,18 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += gravity * delta
 
-	# เก็บความเร็วตกสูงสุดไว้ตลอด ใช้ตัดสินตอนแตะพื้นว่าจะโดน fall damage ไหม
-	if velocity.y > fall_velocity_peak:
-		fall_velocity_peak = velocity.y
+	# ---------- จับความสูงที่ตก (แทนความเร็ว) ----------
+	# is_on_floor() ตอนต้นเฟรมนี้ยังสะท้อนผลลัพธ์จาก move_and_slide() ของเฟรมก่อนหน้า
+	if is_on_floor():
+		was_grounded = true
+	else:
+		if was_grounded:
+			# เพิ่งหลุดจากพื้น ไม่ว่าจะเดินตกขอบหรือเพิ่งกระโดด -> เริ่มจับจุดสูงสุดใหม่
+			fall_start_y = global_position.y
+		was_grounded = false
+		# อัปเดตจุดสูงสุด (ค่า Y น้อยสุด) ที่เคยขึ้นไปถึงระหว่างลอยอยู่รอบนี้
+		# ครอบคลุมทั้งช่วงขาขึ้น (กระโดด) และกันเคสโดนเด้งกำแพงแล้วลอยขึ้นเพิ่มอีกระหว่างตก
+		fall_start_y = min(fall_start_y, global_position.y)
 
 	match state:
 		State.IDLE:
@@ -117,7 +135,6 @@ func _perform_jump() -> void:
 	velocity.x = facing * jump_force * 0.5
 	velocity.y = -jump_force
 
-	fall_velocity_peak = 0.0   # เริ่มกระโดดใหม่ ล้างสถิติการตกรอบก่อนหน้าทิ้ง
 	state = State.JUMPING
 
 
@@ -168,15 +185,15 @@ func _process_wall_bounce(delta: float) -> void:
 
 
 func _land() -> void:
-	var impact_speed: float = fall_velocity_peak
-	fall_velocity_peak = 0.0   # เคลียร์สถิติทันทีที่แตะพื้น ไม่ว่าจะเจ็บหรือไม่ก็ตาม
+	# ความสูงที่ตกจริง = ตำแหน่ง Y ตอนแตะพื้น ลบ ตำแหน่ง Y ของจุดสูงสุดที่เคยขึ้นไปถึง
+	var fall_distance: float = global_position.y - fall_start_y
 
-	if impact_speed >= fall_death_velocity:
-		# ตกแรงเกินขีดสุด ตายทันทีไม่ว่าเลือดจะเหลือเท่าไหร่
+	if fall_distance >= fall_death_height:
+		# ตกสูงเกินขีดสุด ตายทันทีไม่ว่าเลือดจะเหลือเท่าไหร่
 		_die()
 		return
 
-	if impact_speed >= fall_damage_velocity:
+	if fall_distance >= fall_damage_height:
 		current_health -= 1
 		if current_health <= 0:
 			_die()
@@ -215,7 +232,8 @@ func _respawn() -> void:
 	global_position = respawn_position
 	velocity = Vector2.ZERO
 	current_health = max_health
-	fall_velocity_peak = 0.0
+	fall_start_y = respawn_position.y
+	was_grounded = true
 	wall_stun_timer = 0.0
 	landing_timer = 0.0
 	charge_time = 0.0
@@ -316,17 +334,19 @@ func _play_animation(anim_name: String) -> void:
 # เวลาเปลี่ยนอนิเมชัน ฟังก์ชัน _play_animation() จะปรับ sprite.scale ให้เองทุกครั้ง
 # ไม่กระทบกับอนิเมชันอื่น เพราะแยก key ต่อชื่ออนิเมชันชัดเจน ไม่ใช่ปรับที่ node ตรง ๆ แบบเดิม
 #
-# ---------- ระบบ Fall Damage / ตาย / รีสปอว์น ----------
+# ---------- ระบบ Fall Damage / ตาย / รีสปอว์น (อิงความสูง) ----------
 # ต้องมีอนิเมชันชื่อ "death" ใน SpriteFrames เพิ่มเข้ามาด้วย (รวมเป็น 8 อนิเมชันทั้งหมด)
 # **สำคัญมาก**: อนิเมชัน "death" ต้องปิด Loop ไว้ (ในแท็บ Animation ของ SpriteFrames กดปุ่ม Loop ให้เป็นสีเทา/ปิด)
 # ถ้าเปิด Loop ไว้ ตัวละครจะเล่นอนิเมชันตายวนซ้ำไปเรื่อย ๆ แทนที่จะค้างนิ่งอยู่เฟรมสุดท้าย
 #
 # วิธีทำงาน:
-# 1. ทุกเฟรมที่กำลังตกอยู่ (velocity.y > 0) ระบบจะจำ "ความเร็วตกสูงสุด" ไว้ใน fall_velocity_peak
-# 2. พอแตะพื้น (_land) จะเทียบความเร็วนั้นกับ fall_damage_velocity / fall_death_velocity
-#    - ต่ำกว่า fall_damage_velocity      -> ตกฟรี ไม่เจ็บ
-#    - อยู่ระหว่างสอง threshold           -> โดนดาเมจ 1 หน่วย (ปรับจำนวนเลือดที่หายได้ในโค้ด _land())
-#    - สูงกว่า fall_death_velocity        -> ตายทันที ไม่สนใจเลือดที่เหลือ
+# 1. ทุกเฟรมที่ไม่ได้ติดพื้น ระบบจะจับ "จุดสูงสุด" (fall_start_y) ที่ตัวละครเคยขึ้นไปถึง
+#    ไม่ว่าจะเป็นตอนกระโดดขึ้น หรือเดินตกขอบ platform โดยตรง
+# 2. พอแตะพื้น (_land) จะคำนวณ fall_distance = ตำแหน่ง Y ตอนแตะพื้น - fall_start_y
+#    แล้วเทียบกับ fall_damage_height / fall_death_height
+#    - ตกต่ำกว่า fall_damage_height        -> ตกฟรี ไม่เจ็บ
+#    - อยู่ระหว่างสอง threshold            -> โดนดาเมจ 1 หน่วย (ปรับจำนวนเลือดที่หายได้ในโค้ด _land())
+#    - สูงกว่า fall_death_height           -> ตายทันที ไม่สนใจเลือดที่เหลือ
 # 3. ตายแล้วเข้า State.DEAD ตัวละครจะนิ่งสนิท ไม่รับ input เดิน/กระโดดใด ๆ ทั้งสิ้น
 # 4. ต้องรอ death_input_lock_time วินาทีก่อน ถึงจะเริ่มรับปุ่มกดเพื่อรีสปอว์น (กันกดมั่วตอนเพิ่งตาย)
 # 5. หลังจากนั้น กดปุ่มอะไรก็ได้ (คีย์บอร์ด/เมาส์/จอย) หนึ่งครั้ง -> เรียก _respawn() ทันที
@@ -334,4 +354,5 @@ func _play_animation(anim_name: String) -> void:
 # 6. _respawn() จะเทเลพอร์ตกลับไปที่ respawn_position (ค่าเริ่มต้น = ตำแหน่งตอนเกมเริ่ม เก็บไว้ใน _ready())
 #    ถ้าอยากทำระบบ checkpoint ให้ไปเซ็ต player.respawn_position = จุดนั้น ๆ จากสคริปต์ checkpoint ได้เลย
 #
-# ปรับความยากได้ที่ max_health, fall_damage_velocity, fall_death_velocity ตามความรู้สึกที่ต้องการ
+# ปรับความยากได้ที่ max_health, fall_damage_height, fall_death_height ตามความรู้สึกที่ต้องการ
+# ค่าเริ่มต้น 250 / 550 (px) เหมาะกับ tile ขนาด ~32-64px — ถ้า level ของคุณใช้สเกลต่างจากนี้ ให้ปรับสองค่านี้ตามจริง

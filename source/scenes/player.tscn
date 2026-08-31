@@ -297,10 +297,11 @@ sprite_frames = SubResource("SpriteFrames_i7whq")
 animation = &"fall"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=452408070]
-position = Vector2(0, -2)
+position = Vector2(-2, -5)
 shape = SubResource("RectangleShape2D_j3pel")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=224164212]
 zoom = Vector2(2, 2)
+limit_enabled = false
 limit_bottom = 240
 limit_smoothed = true
