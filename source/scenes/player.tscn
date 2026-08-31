@@ -2,11 +2,20 @@
 
 [ext_resource type="Script" uid="uid://ctj3kxn7on8t5" path="res://scripts/player.gd" id="1_qgb13"]
 [ext_resource type="Texture2D" uid="uid://5g6ve7d7rh4f" path="res://assets/spritesandtiles/Character/Dead/Dead-Sheet.png" id="2_qhqgy"]
+[ext_resource type="Texture2D" uid="uid://cgpd1mlgkcfb6" path="res://assets/spritesandtiles/Character/Attack-01/Attack-01-Sheet.png" id="2_smehm"]
 [ext_resource type="Texture2D" uid="uid://cpicvm0084moa" path="res://assets/spritesandtiles/Character/Idle/Idle-Sheet.png" id="4_qlg0r"]
 [ext_resource type="Texture2D" uid="uid://dvi11aayy372r" path="res://assets/spritesandtiles/Character/Jumlp-All/Jump-All-Sheet.png" id="5_fjrip"]
 [ext_resource type="Texture2D" uid="uid://djhlc3vsgracv" path="res://assets/spritesandtiles/Character/Jump-Start/Jump-Start-Sheet.png" id="5_tuyoq"]
 [ext_resource type="Texture2D" uid="uid://b5j8wdg2s2ucb" path="res://assets/spritesandtiles/Character/Jump-End/Jump-End-Sheet.png" id="6_fjrip"]
 [ext_resource type="Texture2D" uid="uid://birk111ortnef" path="res://assets/spritesandtiles/Character/Run/Run-Sheet.png" id="6_tuyoq"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hhpqf"]
+atlas = ExtResource("2_smehm")
+region = Rect2(480, 0, 96, 80)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g5jhy"]
+atlas = ExtResource("2_smehm")
+region = Rect2(576, 0, 96, 80)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_gl8cc"]
 atlas = ExtResource("5_tuyoq")
@@ -142,6 +151,17 @@ region = Rect2(560, 0, 80, 80)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_i7whq"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hhpqf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_g5jhy")
+}],
+"loop": 1,
+"name": &"attack",
+"speed": 5.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_gl8cc")
@@ -294,14 +314,16 @@ script = ExtResource("1_qgb13")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1932356051]
 position = Vector2(3, -3)
 sprite_frames = SubResource("SpriteFrames_i7whq")
-animation = &"fall"
+animation = &"attack"
+frame = 1
+frame_progress = 0.83634704
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=452408070]
 position = Vector2(-2, -5)
 shape = SubResource("RectangleShape2D_j3pel")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=224164212]
-zoom = Vector2(2, 2)
+position = Vector2(-2, 1)
 limit_enabled = false
 limit_bottom = 240
 limit_smoothed = true

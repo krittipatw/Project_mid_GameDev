@@ -6,7 +6,7 @@ extends CharacterBody2D
 
 # ===== ค่าคงที่ที่ปรับได้ =====
 @export var gravity: float = 1400.0
-@export var move_speed_ground: float = 180.0   # ความเร็วเดินตอนอยู่บนพื้น
+@export var move_speed_ground: float = 240.0   # ความเร็วเดินตอนอยู่บนพื้น
 @export var move_speed_air: float = 60.0       # ความเร็วขยับตอนลอยกลางอากาศ (Jump King ขยับอากาศได้น้อยมาก)
 @export var min_jump_force: float = 300.0
 @export var max_jump_force: float = 750.0
@@ -24,8 +24,13 @@ extends CharacterBody2D
 
 @export var death_input_lock_time: float = 0.4    # เวลาขั้นต่ำหลังตายก่อนจะรับ input รีสปอว์น (กันกดมั่วตอนกำลังล้มแล้วรีทันที)
 
+# ===== Attack (คลิกซ้ายเพื่อโจมตี) =====
+@export var attack_duration: float = 0.3     # ความยาวของท่าโจมตี (ล็อกการขยับระหว่างนี้) ให้ตรงกับความยาวอนิเมชัน "attack"
+@export var attack_cooldown: float = 0.15    # เวลาพักหลังโจมตีจบ ก่อนจะโจมตีซ้ำได้อีกครั้ง
+@export var attack_damage: int = 1           # ค่าดาเมจที่จะส่งให้ศัตรู (ใช้ตอนต่อระบบ hitbox จริง)
+
 # ===== State Machine =====
-enum State { IDLE, CHARGING, JUMPING, FALLING, LANDING, WALL_BOUNCE, DEAD }
+enum State { IDLE, CHARGING, JUMPING, FALLING, LANDING, WALL_BOUNCE, ATTACK, DEAD }
 var state: State = State.IDLE
 
 var charge_time: float = 0.0
@@ -33,6 +38,8 @@ var facing: int = 1              # 1 = ขวา, -1 = ซ้าย
 var jump_velocity: Vector2 = Vector2.ZERO
 var landing_timer: float = 0.0
 var wall_stun_timer: float = 0.0   # นับถอยหลังตอนอยู่ใน State.WALL_BOUNCE (คุมทิศทางเองไม่ได้เลยจนกว่าจะหมด)
+var attack_timer: float = 0.0          # นับถอยหลังตอนอยู่ใน State.ATTACK
+var attack_cooldown_timer: float = 0.0 # นับถอยหลังหลังโจมตีจบ ก่อนจะโจมตีซ้ำได้
 
 # --- ตัวแปรใหม่สำหรับวัด fall damage จากความสูง ---
 var was_grounded: bool = true      # เก็บสถานะ is_on_floor() ของเฟรมก่อนหน้า ใช้จับจังหวะ "เพิ่งหลุดจากพื้น"
@@ -71,6 +78,15 @@ func _physics_process(delta: float) -> void:
 		# ครอบคลุมทั้งช่วงขาขึ้น (กระโดด) และกันเคสโดนเด้งกำแพงแล้วลอยขึ้นเพิ่มอีกระหว่างตก
 		fall_start_y = min(fall_start_y, global_position.y)
 
+	if attack_cooldown_timer > 0.0:
+		attack_cooldown_timer -= delta
+
+	# คลิกซ้าย = โจมตี (ต้องยืนอยู่บนพื้นและว่างอยู่ ไม่ใช่กำลังชาร์จ/เด้งกำแพง/ตาย/โจมตีค้าง)
+	# ถ้าอยากให้โจมตีกลางอากาศได้ด้วย ให้เพิ่ม State.JUMPING, State.FALLING เข้าไปในเงื่อนไขนี้
+	if state == State.IDLE and attack_cooldown_timer <= 0.0 \
+			and Input.is_action_just_pressed("attack"):
+		_start_attack()
+
 	match state:
 		State.IDLE:
 			_process_idle(delta)
@@ -82,6 +98,8 @@ func _physics_process(delta: float) -> void:
 			_process_wall_bounce(delta)
 		State.LANDING:
 			_process_landing(delta)
+		State.ATTACK:
+			_process_attack(delta)
 		State.DEAD:
 			_process_dead(delta)
 
@@ -182,6 +200,24 @@ func _process_wall_bounce(delta: float) -> void:
 
 	if is_on_floor():
 		_land()
+
+
+# ---------- เริ่มโจมตี (คลิกซ้าย) ----------
+func _start_attack() -> void:
+	state = State.ATTACK
+	attack_timer = attack_duration
+	velocity.x = 0.0
+	# TODO: ตรงนี้เหมาะกับการเปิด hitbox/Area2D สำหรับเช็คชนศัตรู แล้วส่ง attack_damage ให้เป้าหมาย
+	# เช่น $AttackHitbox.monitoring = true แล้วปิดอีกทีตอนจบ state (หรือใช้ AnimationPlayer track เปิด-ปิดเอง)
+
+
+# ---------- ATTACK (ล็อกการขยับระหว่างเล่นท่าโจมตี) ----------
+func _process_attack(delta: float) -> void:
+	velocity.x = 0.0
+	attack_timer -= delta
+	if attack_timer <= 0.0:
+		attack_cooldown_timer = attack_cooldown
+		state = State.IDLE
 
 
 func _land() -> void:
@@ -296,6 +332,8 @@ func _update_animation() -> void:
 				_play_animation("fall")
 		State.LANDING:
 			_play_animation("land")
+		State.ATTACK:
+			_play_animation("attack")
 		State.DEAD:
 			# เล่นครั้งเดียวตอนเพิ่งเข้าสถานะ DEAD เท่านั้น ไม่เรียกซ้ำทุกเฟรม
 			# เพราะถ้าอนิเมชัน "death" ตั้ง loop ไว้ปิด (ควรปิด) การเรียก play() ซ้ำจะทำให้เด้งกลับไปเฟรม 0 ทุกครั้ง
@@ -315,9 +353,12 @@ func _play_animation(anim_name: String) -> void:
 # move_left  -> A / Left Arrow
 # move_right -> D / Right Arrow
 # jump       -> Space / Z (ปุ่มเดียว กดค้างชาร์จ ปล่อยเพื่อกระโดด)
+# attack     -> Left Mouse Button (คลิกซ้าย)
+#   วิธีเพิ่ม: Project Settings > Input Map > พิมพ์ชื่อ action ว่า "attack" ในช่อง > กด Add
+#   จากนั้นกดปุ่ม "+" ข้าง action ที่สร้าง แล้วคลิกซ้ายเมาส์ค้างไว้ 1 ครั้งเพื่อจับ event ปุ่มซ้าย
 #
 # หมายเหตุ: ต้องมีอนิเมชันชื่อ "walk" ใน SpriteFrames ด้วย ไม่งั้นตอนเดินจะ error
-# (idle, walk, charge, jump, fall, land, death — อย่างน้อย 7 อนิเมชัน ขาดตัวใดตัวหนึ่งจะ error ตอน play())
+# (idle, walk, charge, jump, fall, land, attack, death — อย่างน้อย 8 อนิเมชัน ขาดตัวใดตัวหนึ่งจะ error ตอน play())
 # ("wall_bounce" ไม่บังคับ มี fallback ไปเล่น "fall" แทนถ้าไม่มี — ดูหมายเหตุด้านล่าง)
 #
 # ระบบเด้งกำแพง: ไม่บังคับต้องมีอนิเมชันเพิ่ม จะใช้ "fall" เดิมเล่นระหว่างโดนเด้งก็ได้
@@ -356,3 +397,16 @@ func _play_animation(anim_name: String) -> void:
 #
 # ปรับความยากได้ที่ max_health, fall_damage_height, fall_death_height ตามความรู้สึกที่ต้องการ
 # ค่าเริ่มต้น 250 / 550 (px) เหมาะกับ tile ขนาด ~32-64px — ถ้า level ของคุณใช้สเกลต่างจากนี้ ให้ปรับสองค่านี้ตามจริง
+#
+# ---------- ระบบโจมตี (คลิกซ้าย) ----------
+# ตอนนี้คลิกซ้ายจะทำงานเฉพาะตอนยืนอยู่บนพื้นในสถานะ IDLE เท่านั้น (กันโจมตีระหว่างชาร์จ/ลอยกลางอากาศ/เด้งกำแพง/ตาย)
+# ถ้าอยากให้โจมตีกลางอากาศได้ด้วย ให้เพิ่ม State.JUMPING, State.FALLING ในเงื่อนไขเช็ค Input.is_action_just_pressed("attack")
+#
+# ตอนโจมตี ตัวละครจะเข้า State.ATTACK ล็อกไม่ให้เดิน (velocity.x = 0) เป็นเวลา attack_duration วินาที
+# ให้ตั้งเวลานี้ให้พอดีกับความยาวจริงของอนิเมชัน "attack" ใน SpriteFrames
+# จบท่าแล้วจะเข้าเวลาพัก attack_cooldown ก่อนจะกดโจมตีซ้ำได้อีกครั้ง
+#
+# ระบบนี้ยังไม่ได้ต่อ hitbox ตรวจชนศัตรูจริง — จุดที่ควรเพิ่มคือใน _start_attack()
+# แนะนำให้เพิ่ม Area2D ชื่อ เช่น "AttackHitbox" เป็นลูกของตัวละคร (วางตำแหน่งด้านหน้าตามทิศ facing)
+# แล้วเปิด monitoring = true ตอนเริ่มโจมตี ปิดตอนจบ State.ATTACK จากนั้นเชื่อม signal
+# area_entered/body_entered ของ hitbox นั้นเพื่อเรียก take_damage(attack_damage) กับศัตรูที่ชน
