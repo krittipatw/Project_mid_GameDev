@@ -9,8 +9,8 @@ extends CharacterBody2D
 @export var move_speed_ground: float = 180.0   # ความเร็วเดินตอนอยู่บนพื้น
 @export var move_speed_air: float = 60.0       # ความเร็วขยับตอนลอยกลางอากาศ (Jump King ขยับอากาศได้น้อยมาก)
 @export var min_jump_force: float = 300.0
-@export var max_jump_force: float = 900.0
-@export var charge_rate: float = 900.0         # แรงที่เพิ่มขึ้นต่อวินาทีตอนกดค้าง
+@export var max_jump_force: float = 750.0
+@export var charge_rate: float = 750.0         # แรงที่เพิ่มขึ้นต่อวินาทีตอนกดค้าง
 @export var max_charge_time: float = 1.2
 @export var landing_lock_time: float = 0.25    # เวลาที่ขยับไม่ได้ตอนลงพื้น (ให้ตรงกับอนิเมชัน land)
 @export var wall_bounce_force: float = 210.0   # แรงที่เด้งกลับตอนชนกำแพงกลางอากาศ
@@ -18,7 +18,7 @@ extends CharacterBody2D
 @export var wall_stun_time: float = 0.25       # เวลาที่คุมทิศทางไม่ได้หลังโดนเด้ง (กันกดสู้แรงเด้งจนไม่รู้สึกว่าชน)
 @export var max_health: int = 3                # เลือดสูงสุด หมดแล้วตาย
 @export var fall_damage_velocity: float = 700.0   # ความเร็วตกขั้นต่ำที่เริ่มโดน fall damage (ต่ำกว่านี้ตกฟรี ไม่เจ็บ)
-@export var fall_death_velocity: float = 1200.0   # ความเร็วตกที่แรงพอจะตายทันที ไม่ว่าเลือดเหลือเท่าไหร่
+@export var fall_death_velocity: float = 1300.0   # ความเร็วตกที่แรงพอจะตายทันที ไม่ว่าเลือดเหลือเท่าไหร่
 @export var death_input_lock_time: float = 0.4    # เวลาขั้นต่ำหลังตายก่อนจะรับ input รีสปอว์น (กันกดมั่วตอนกำลังล้มแล้วรีทันที)
 
 # ===== State Machine =====
