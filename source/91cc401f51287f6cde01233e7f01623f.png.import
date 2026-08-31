@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://lele1fp53q6o"
-path="res://.godot/imported/goblinspritesheet.png-d023c1ad42c880c718e6cdf4f04f7bca.ctex"
+uid="uid://cn5k6gbn8kwfy"
+path="res://.godot/imported/91cc401f51287f6cde01233e7f01623f.png-6ac22f695029dd0f7ea56b2defb3591a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/spritesandtiles/goblinspritesheet.png"
-dest_files=["res://.godot/imported/goblinspritesheet.png-d023c1ad42c880c718e6cdf4f04f7bca.ctex"]
+source_file="res://91cc401f51287f6cde01233e7f01623f.png"
+dest_files=["res://.godot/imported/91cc401f51287f6cde01233e7f01623f.png-6ac22f695029dd0f7ea56b2defb3591a.ctex"]
 
 [params]
 
