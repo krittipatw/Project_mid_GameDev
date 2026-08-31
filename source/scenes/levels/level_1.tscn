@@ -838,61 +838,66 @@ metadata/_edit_horizontal_guides_ = [513.0]
 metadata/_edit_vertical_guides_ = [-81.0]
 
 [node name="Player" parent="." unique_id=407025189 instance=ExtResource("1_nt6kk")]
-position = Vector2(1119, 861)
+position = Vector2(41, 215)
 collision_layer = 3
 
 [node name="Tilemap" type="Node2D" parent="." unique_id=2009184545]
+metadata/_edit_lock_ = true
 
 [node name="Background6" type="Sprite2D" parent="Tilemap" unique_id=356429628]
-position = Vector2(1530, 1878.0001)
+position = Vector2(1621, 1853.0001)
 scale = Vector2(3.3229167, 2.8125)
 texture = ExtResource("4_s8va5")
+metadata/_edit_lock_ = true
 
 [node name="Thumb19201048820" type="Sprite2D" parent="Tilemap" unique_id=817726193]
-position = Vector2(1567.9999, 1663.0001)
+position = Vector2(1560, 1809)
 rotation = -3.1370845
 scale = Vector2(1.156771, 1.6355718)
 texture = ExtResource("3_s8va5")
+metadata/_edit_lock_ = true
 
 [node name="Background4a2" type="Sprite2D" parent="Tilemap" unique_id=1686287155]
-position = Vector2(1534, 1824)
-scale = Vector2(3.4364579, 3.2041662)
+position = Vector2(1534, 1882.0001)
+scale = Vector2(3.4364579, 3.4458332)
 texture = ExtResource("5_dga24")
+metadata/_edit_lock_ = true
 
 [node name="Background1" type="Sprite2D" parent="Tilemap" unique_id=1761612284]
 position = Vector2(435, 798.5)
 scale = Vector2(1.1708333, 1.0229167)
 texture = ExtResource("2_sk5k4")
-metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
 
 [node name="Background2" type="Sprite2D" parent="Tilemap" unique_id=951268948]
 position = Vector2(2013, 801)
 scale = Vector2(2.4625, 1.0166667)
 texture = ExtResource("2_sk5k4")
+metadata/_edit_lock_ = true
 
 [node name="Background3" type="Sprite2D" parent="Tilemap" unique_id=1748563726]
 position = Vector2(830, 798.5)
 scale = Vector2(2.0020833, 1.0145833)
 texture = ExtResource("3_oc4kc")
-metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
 
 [node name="Background4" type="Sprite2D" parent="Tilemap" unique_id=49267810]
 position = Vector2(2495, 804)
 scale = Vector2(1.478125, 1)
 texture = ExtResource("3_oc4kc")
-metadata/_edit_group_ = true
-
-[node name="Background4a" type="Sprite2D" parent="Tilemap" unique_id=551998290]
-position = Vector2(1533, 777.5)
-scale = Vector2(3.5020835, 1.2479166)
-texture = ExtResource("5_dga24")
-metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
 
 [node name="Background5" type="Sprite2D" parent="Tilemap" unique_id=1797164530]
 position = Vector2(1528.5, 767)
 scale = Vector2(3.484375, 1.1583333)
 texture = ExtResource("4_s8va5")
-metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
+
+[node name="Background4a" type="Sprite2D" parent="Tilemap" unique_id=551998290]
+position = Vector2(1537, 777.5)
+scale = Vector2(3.49375, 1.2479166)
+texture = ExtResource("5_dga24")
+metadata/_edit_lock_ = true
 
 [node name="TileMapLayer" type="TileMapLayer" parent="Tilemap" unique_id=239458087 groups=["Ground"]]
 position = Vector2(181, 123)
