@@ -16,11 +16,11 @@ extends CharacterBody2D
 @export var wall_bounce_force: float = 210.0   # แรงที่เด้งกลับตอนชนกำแพงกลางอากาศ
 @export var wall_bounce_vertical_boost: float = 0.6  # สัดส่วนที่ดึงแรงตกลงมาแปลงเป็นแรงเด้งขึ้นนิดหน่อย (0 = ไม่บวกเลย)
 @export var wall_stun_time: float = 0.25       # เวลาที่คุมทิศทางไม่ได้หลังโดนเด้ง (กันกดสู้แรงเด้งจนไม่รู้สึกว่าชน)
-@export var max_health: int = 3                # เลือดสูงสุด หมดแล้วตาย
+@export var max_health: int = 1                # เลือดสูงสุด หมดแล้วตาย
 
 # ===== Fall Damage: อิงความสูงที่ตกจริง (px) แทนความเร็วตอนกระแทกพื้น =====
-@export var fall_damage_height: float = 300.0     # ตกเกินความสูงนี้ (px) เริ่มโดนดาเมจ ต่ำกว่านี้ตกฟรีไม่เจ็บ
-@export var fall_death_height: float = 650.0      # ตกเกินความสูงนี้ ตายทันที ไม่ว่าเลือดเหลือเท่าไหร่
+@export var fall_damage_height: float = 350.0     # ตกเกินความสูงนี้ (px) เริ่มโดนดาเมจ ต่ำกว่านี้ตกฟรีไม่เจ็บ
+@export var fall_death_height: float = 700.0      # ตกเกินความสูงนี้ ตายทันที ไม่ว่าเลือดเหลือเท่าไหร่
 
 @export var death_input_lock_time: float = 0.4    # เวลาขั้นต่ำหลังตายก่อนจะรับ input รีสปอว์น (กันกดมั่วตอนกำลังล้มแล้วรีทันที)
 
