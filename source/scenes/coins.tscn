@@ -1,0 +1,70 @@
+[gd_scene load_steps=11 format=3 uid="uid://cv8rrwrejrbn0"]
+
+[ext_resource type="Script" path="res://scripts/coins.gd" id="1_rtv30"]
+[ext_resource type="Texture2D" uid="uid://pdq6g82b0oj0" path="res://assets/spritesandtiles/coinsspritesheet.png" id="1_rud0w"]
+[ext_resource type="AudioStream" uid="uid://dpheh5d76okmv" path="res://assets/sounds/retro-coin-4-236671 (1).mp3" id="3_8vf0x"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d0owh"]
+atlas = ExtResource("1_rud0w")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ughct"]
+atlas = ExtResource("1_rud0w")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lgnrn"]
+atlas = ExtResource("1_rud0w")
+region = Rect2(32, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xtyg6"]
+atlas = ExtResource("1_rud0w")
+region = Rect2(48, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7uaux"]
+atlas = ExtResource("1_rud0w")
+region = Rect2(64, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_8idiw"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d0owh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ughct")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lgnrn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xtyg6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7uaux")
+}],
+"loop": true,
+"name": &"coins",
+"speed": 5.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_3fwa7"]
+radius = 5.0
+
+[node name="coins" type="Area2D"]
+collision_mask = 2
+script = ExtResource("1_rtv30")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_8idiw")
+animation = &"coins"
+autoplay = "coins"
+frame_progress = 0.58462
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_3fwa7")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_8vf0x")
+bus = &"sfx"
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
