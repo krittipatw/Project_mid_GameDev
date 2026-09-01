@@ -1,0 +1,73 @@
+[gd_scene format=3 uid="uid://c1cw64obck53e"]
+
+[sub_resource type="Animation" id="Animation_wpfv8"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Label:visible")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [false]
+}
+
+[sub_resource type="Animation" id="Animation_ya2f1"]
+resource_name = "fade"
+length = 4.9
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Label:visible")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1.03, 3.9),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [false, true, false]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_oxn8b"]
+_data = {
+&"RESET": SubResource("Animation_wpfv8"),
+&"fade": SubResource("Animation_ya2f1")
+}
+
+[node name="ColorRect" type="ColorRect" unique_id=1049595126]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_right = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Label" type="Label" parent="." unique_id=1800035413]
+visible = false
+layout_mode = 0
+offset_left = 8.0
+offset_top = 242.0
+offset_right = 707.0
+offset_bottom = 265.0
+text = "You heard there is smoking hot babe down there who ever reach it will get her as a reward"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Label" unique_id=1543791412]
+root_node = NodePath("../..")
+libraries/ = SubResource("AnimationLibrary_oxn8b")
+
+[node name="Label2" type="Label" parent="." unique_id=2112332686]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 242.0
+offset_right = 707.0
+offset_bottom = 265.0
+text = "You heard there is smoking hot babe down there who ever reach it will get her as a reward"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Label2" unique_id=1589335379]
+root_node = NodePath("../..")
+libraries/ = SubResource("AnimationLibrary_oxn8b")

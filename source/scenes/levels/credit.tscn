@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://iid5a3cl288f"]
+
+[ext_resource type="Texture2D" uid="uid://cyqsvbn6uoh0r" path="res://assets/bg/background1.png" id="1_26oag"]
+
+[node name="credit" type="Node2D" unique_id=124974052]
+
+[node name="Background1" type="Sprite2D" parent="." unique_id=1727674394]
+position = Vector2(362, 239)
+texture = ExtResource("1_26oag")
+
+[node name="Label" type="Label" parent="." unique_id=1030192973]
+offset_left = 74.0
+offset_top = 112.0
+offset_right = 171.0
+offset_bottom = 135.0
+text = "683380088-5"
