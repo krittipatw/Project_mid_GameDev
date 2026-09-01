@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://fv6gd7wmo8v3"]
+
+[ext_resource type="Script" uid="uid://bsggkriado7nx" path="res://scenes/test/main_menu.gd" id="1_fsby3"]
+
+[node name="Mainmenu" type="Control" unique_id=1807829843]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_fsby3")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=55476061]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=2063164702]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=268519494]
+layout_mode = 2
+
+[node name="play" type="Button" parent="CenterContainer/VBoxContainer" unique_id=1867094963]
+layout_mode = 2
+text = "PLAY"
+
+[node name="Setting" type="Button" parent="CenterContainer/VBoxContainer" unique_id=1515855850]
+layout_mode = 2
+text = "SETTING"
+
+[node name="quit" type="Button" parent="CenterContainer/VBoxContainer" unique_id=1907454185]
+layout_mode = 2
+text = "QUIT"
+
+[connection signal="pressed" from="CenterContainer/VBoxContainer/play" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="CenterContainer/VBoxContainer/Setting" to="." method="_on_setting_pressed"]
+[connection signal="pressed" from="CenterContainer/VBoxContainer/quit" to="." method="_on_quit_pressed"]

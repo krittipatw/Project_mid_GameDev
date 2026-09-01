@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://dpb2s4fdotk08"]
+
+[ext_resource type="Script" uid="uid://b1fwlnopiqovs" path="res://trap_blades.gd" id="1_7jpg7"]
+[ext_resource type="Texture2D" uid="uid://b8q1bwikwjunq" path="res://picture/piece_07.png" id="1_ng75o"]
+[ext_resource type="Texture2D" uid="uid://d018bm3vir41b" path="res://picture/piece_13.png" id="2_fen7a"]
+[ext_resource type="Texture2D" uid="uid://b3rjil8qqb2w3" path="res://picture/piece_23.png" id="3_7jpg7"]
+[ext_resource type="Texture2D" uid="uid://cjg03ehgpa67k" path="res://picture/piece_29.png" id="5_fen7a"]
+[ext_resource type="Texture2D" uid="uid://b7hgs5vsyjf2e" path="res://picture/piece_39.png" id="5_prnvr"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_d1pwa"]
+radius = 13.017083
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_0mfpn"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_ng75o")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_fen7a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_7jpg7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_fen7a")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_prnvr")
+}],
+"loop": 1,
+"name": &"spin",
+"speed": 5.0
+}]
+
+[node name="trap_saw" type="StaticBody2D" unique_id=1052259483]
+script = ExtResource("1_7jpg7")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=929309266]
+position = Vector2(579, 155)
+scale = Vector2(3, 3)
+shape = SubResource("CircleShape2D_d1pwa")
+
+[node name="Piece07" type="AnimatedSprite2D" parent="CollisionShape2D" unique_id=1337792750]
+position = Vector2(0.3333385, -6.0000014)
+sprite_frames = SubResource("SpriteFrames_0mfpn")
+animation = &"spin"

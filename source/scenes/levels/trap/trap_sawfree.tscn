@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://bqchfcdmex6gg"]
+
+[ext_resource type="Texture2D" uid="uid://bepo00eujpjlx" path="res://picture/piece_51.png" id="1_8spl2"]
+[ext_resource type="Script" uid="uid://6uo7em1ja21w" path="res://trap_sawfree.gd" id="1_masjg"]
+[ext_resource type="Texture2D" uid="uid://dprrc7cykm5cl" path="res://picture/piece_52.png" id="2_masjg"]
+[ext_resource type="Texture2D" uid="uid://t4afkgu6h4e7" path="res://picture/piece_53.png" id="3_jr6ip"]
+[ext_resource type="Texture2D" uid="uid://ypk2exsjxpm3" path="res://picture/piece_54.png" id="4_a8t0w"]
+[ext_resource type="Texture2D" uid="uid://droi75oy4a0o2" path="res://picture/piece_55.png" id="5_3lkan"]
+[ext_resource type="Texture2D" uid="uid://b263rqq31evrq" path="res://picture/piece_56.png" id="6_4lthu"]
+[ext_resource type="Texture2D" uid="uid://digfouwej2e0s" path="res://picture/piece_53.1.png" id="7_qo1xo"]
+[ext_resource type="Texture2D" uid="uid://477qkqkanfcl" path="res://picture/piece_51.1.png" id="8_1wbq7"]
+[ext_resource type="Texture2D" uid="uid://d3ftgmqy82cj2" path="res://picture/piece_52.1.png" id="9_58vcs"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_gktbp"]
+radius = 43.104523
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_0mfpn"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_8spl2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_masjg")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_jr6ip")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_a8t0w")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_3lkan")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_4lthu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_qo1xo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_1wbq7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_58vcs")
+}],
+"loop": 1,
+"name": &"spin",
+"speed": 5.0
+}]
+
+[node name="trap_sawfree" type="StaticBody2D" unique_id=1528501640]
+script = ExtResource("1_masjg")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1825926307]
+position = Vector2(419, 179)
+shape = SubResource("CircleShape2D_gktbp")
+
+[node name="Piece51" type="AnimatedSprite2D" parent="CollisionShape2D" unique_id=1492744192]
+scale = Vector2(3, 3)
+sprite_frames = SubResource("SpriteFrames_0mfpn")
+animation = &"spin"
+frame = 1
+frame_progress = 0.35792843
