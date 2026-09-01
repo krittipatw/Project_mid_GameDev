@@ -67,7 +67,7 @@ offset_top = 109.0
 offset_right = 728.0
 offset_bottom = 197.0
 theme_override_font_sizes/font_size = 20
-text = "Go on if you can win"
+text = "Go on try this game"
 
 [connection signal="pressed" from="CenterContainer/VBoxContainer/start" to="." method="_on_start_pressed"]
 [connection signal="pressed" from="CenterContainer/VBoxContainer/credit" to="." method="_on_credit_pressed"]
