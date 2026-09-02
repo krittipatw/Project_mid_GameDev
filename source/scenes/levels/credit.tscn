@@ -9,8 +9,42 @@ position = Vector2(362, 239)
 texture = ExtResource("1_26oag")
 
 [node name="Label" type="Label" parent="." unique_id=1030192973]
-offset_left = 74.0
-offset_top = 112.0
-offset_right = 171.0
-offset_bottom = 135.0
+offset_left = 204.0
+offset_top = 184.0
+offset_right = 301.0
+offset_bottom = 207.0
 text = "683380088-5"
+
+[node name="Label6" type="Label" parent="." unique_id=2012799096]
+offset_left = 384.0
+offset_top = 215.0
+offset_right = 481.0
+offset_bottom = 238.0
+
+[node name="Label5" type="Label" parent="." unique_id=729089283]
+offset_left = 206.0
+offset_top = 96.0
+offset_right = 303.0
+offset_bottom = 119.0
+text = "Developer"
+
+[node name="Label2" type="Label" parent="." unique_id=100792896]
+offset_left = 204.0
+offset_top = 141.0
+offset_right = 301.0
+offset_bottom = 164.0
+text = "683380065-7"
+
+[node name="Label3" type="Label" parent="." unique_id=996299063]
+offset_left = 202.0
+offset_top = 231.0
+offset_right = 299.0
+offset_bottom = 254.0
+text = "683380307-9"
+
+[node name="Label4" type="Label" parent="." unique_id=1023750310]
+offset_left = 200.0
+offset_top = 281.0
+offset_right = 297.0
+offset_bottom = 304.0
+text = "683380586-9"
