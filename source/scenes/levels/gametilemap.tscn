@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://c8n3820226sd2" path="res://assets/world/Props-Rocks.png" id="6_64rqh"]
 [ext_resource type="Texture2D" uid="uid://rtq8rqfahrsw" path="res://assets/world/Tree-Assets.png" id="7_sjwfn"]
 [ext_resource type="PackedScene" uid="uid://cop0bc0c7rxu1" path="res://scenes/enemy.tscn" id="8_xjv50"]
+[ext_resource type="Script" path="res://scripts/pause_menu.gd" id="9_pausemenu"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4tg3h"]
 texture = ExtResource("3_poyy6")
@@ -5355,3 +5356,73 @@ position = Vector2(7, 4013)
 
 [node name="enemy11" parent="Map2d" unique_id=1825717985 instance=ExtResource("8_xjv50")]
 position = Vector2(566, 6620)
+
+[node name="PauseUI" type="CanvasLayer" parent="."]
+layer = 10
+process_mode = 3
+script = ExtResource("9_pausemenu")
+
+[node name="PauseButton" type="Button" parent="PauseUI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -56.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 40.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 20
+text = "II"
+
+[node name="PausePanel" type="Control" parent="PauseUI"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="PauseUI/PausePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterContainer" type="CenterContainer" parent="PauseUI/PausePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PauseUI/PausePanel/CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PausedLabel" type="Label" parent="PauseUI/PausePanel/CenterContainer/VBoxContainer"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 32
+text = "PAUSED"
+
+[node name="ResumeButton" type="Button" parent="PauseUI/PausePanel/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "RESUME"
+
+[node name="RestartButton" type="Button" parent="PauseUI/PausePanel/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "RESTART"
+
+[node name="LeaveButton" type="Button" parent="PauseUI/PausePanel/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "LEAVE"
+
+[connection signal="pressed" from="PauseUI/PauseButton" to="PauseUI" method="_on_pause_button_pressed"]
+[connection signal="pressed" from="PauseUI/PausePanel/CenterContainer/VBoxContainer/ResumeButton" to="PauseUI" method="_on_resume_button_pressed"]
+[connection signal="pressed" from="PauseUI/PausePanel/CenterContainer/VBoxContainer/RestartButton" to="PauseUI" method="_on_restart_button_pressed"]
+[connection signal="pressed" from="PauseUI/PausePanel/CenterContainer/VBoxContainer/LeaveButton" to="PauseUI" method="_on_leave_button_pressed"]
